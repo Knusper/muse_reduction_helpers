@@ -423,3 +423,18 @@
 * ☛ TODO Second pass of muse_scipost with modified sky continuum
 
   See Sect. 2.1 in Herenz et al. (2023, A&A 670, A121).
+
+  
+* License
+
+#+begin_quote
+/*
+ * ----------------------------------------------------------------------------
+ * "THE BEER-WARE LICENSE":
+ * <eherenz@eso.org> wrote this file.  As long as you retain this notice you
+ * can do whatever you want with this stuff. If we meet some day, and you think
+ * this stuff is worth it, you can buy me a beer in return.   E.C. Herenz
+ * ----------------------------------------------------------------------------
+ */
+
+#+end_quote
