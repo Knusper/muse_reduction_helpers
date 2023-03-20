@@ -1,0 +1,16 @@
+# -*- mode: gitignore; -*-
+*~
+\#*\#
+tramp
+.\#*
+
+# Org-mode
+.org-id-locations
+*_archive
+
+# Flycheck
+flycheck_*.el
+
+# directory configuration
+.dir-locals.el
+
