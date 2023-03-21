@@ -415,7 +415,7 @@
    |                    | ~./esorex_scipost.sh ./obj_name/~                  | 60 min                |
    | ~muse_exp_align~   | ~./gen_sof_and_esorex_exp_align.sh ./obj_name/~    | 5 min                 |
    |                    | note: one can adjust the threshold (see above)     |                       |
-   | ~muse_exp_combine~ | ~./gen_sof_and_esorex_exp_combine.sh ./obj_name/~_ | 90 min                |
+   | ~muse_exp_combine~ | ~./gen_sof_and_esorex_exp_combine.sh ./obj_name/~  | 90 min                |
 
    Running times are what I get typically for the MUSE reduction
    server at Leiden Observatory.
