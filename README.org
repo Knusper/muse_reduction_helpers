@@ -197,7 +197,7 @@
    #+begin_src python :tangle ./gen_sofs_for_scipost.py
      #! /usr/bin/env python
 
-     
+
 
      #  for dirname in ./J0519+0007/*_basic_*
      #   do
@@ -236,13 +236,14 @@
 
      # sof file out
      timestamp = scibasic_directory[scibasic_directory.rfind('basic') + 6:-1]
-     sof_name = scibasic_directory + '/' + obj_name + '_' + timestamp + '_scipost_1.sof'
+     sof_name = scibasic_directory + '/' + obj_name.replace(' ', '_') + '_' + \
+	 timestamp + '_scipost_1.sof'
      sof_file = open(sof_name, 'w')
 
      for filename in pxtbl_files:
 	 sof_file.write(filename + '  PIXTABLE_OBJECT \n')
 
-    
+
      sof_file.write(stdrsp_list[(stdrsp_times - obj_time).argmin()] + '  STD_RESPONSE \n')
      sof_file.write(stdtlr_list[(stdtlr_times - obj_time).argmin()] + '  STD_TELLURIC \n')
      sof_file.write(lsprof_list[(lsprof_times - obj_time).argmin()] + '  LSF_PROFILE \n')

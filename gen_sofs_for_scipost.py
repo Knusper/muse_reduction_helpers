@@ -39,7 +39,8 @@ ext_tabl_file = gen_file_list(dldir_files, 'HIERARCH ESO PRO CATG', 'EXTINCT_TAB
 
 # sof file out
 timestamp = scibasic_directory[scibasic_directory.rfind('basic') + 6:-1]
-sof_name = scibasic_directory + '/' + obj_name + '_' + timestamp + '_scipost_1.sof'
+sof_name = scibasic_directory + '/' + obj_name.replace(' ', '_') + '_' + \
+    timestamp + '_scipost_1.sof'
 sof_file = open(sof_name, 'w')
 
 for filename in pxtbl_files:
