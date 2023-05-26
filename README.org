@@ -86,7 +86,9 @@
      for obj, obj_time in zip(object_list, object_times):
 
 	 obj_name = fits.getheader(obj)['OBJECT']
-	 sof_name = directory + obj_name + '_basic_' + os.path.basename(obj).removesuffix('fits.fz') + 'sof'
+    
+	 sof_name = directory + obj_name.replace(' ', '_') + '_basic_' + \
+	     os.path.basename(obj).removesuffix('fits.fz') + 'sof'
 	 sof_file = open(sof_name, 'w')
 
 	 sof_file.write(obj + '  OBJECT  \n')
@@ -433,8 +435,7 @@
  * "THE BEER-WARE LICENSE":
  * <eherenz@eso.org> wrote this file.  As long as you retain this notice you
  * can do whatever you want with this stuff. If we meet some day, and you think
- * this stuff is worth it, you can buy me a beer in return.   E.C. Herenz
+ * this stuff is worth it, you can buy me a beer in return.   E.C. Herenz (2023)
  * ----------------------------------------------------------------------------
  */
-
 #+end_quote

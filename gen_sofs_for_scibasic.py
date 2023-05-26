@@ -38,7 +38,9 @@ illumf_list, illumf_times = gen_file_list(files, 'HIERARCH ESO DPR TYPE', 'FLAT,
 for obj, obj_time in zip(object_list, object_times):
 
     obj_name = fits.getheader(obj)['OBJECT']
-    sof_name = directory + obj_name + '_basic_' + os.path.basename(obj).removesuffix('fits.fz') + 'sof'
+
+    sof_name = directory + obj_name.replace(' ', '_') + '_basic_' + \
+	os.path.basename(obj).removesuffix('fits.fz') + 'sof'
     sof_file = open(sof_name, 'w')
 
     sof_file.write(obj + '  OBJECT  \n')
