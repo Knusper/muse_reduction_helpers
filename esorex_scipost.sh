@@ -1,6 +1,7 @@
 #! /usr/bin/env bash
 
 directory=$1
+extrarg=$2
 
 for soffile in $directory/*_basic_*/*_scipost_1.sof
 do
@@ -12,6 +13,6 @@ do
 
     esorex --no-datamd5 --no-checksum --log-file=${outdir}/${logname%sof}log \
 	   --output-dir=${outdir}/ \
-	   muse_scipost --save=cube,individual,skymodel ${soffile}
+	   muse_scipost --save=cube,individual,skymodel ${extrarg} ${soffile}
 
 done
