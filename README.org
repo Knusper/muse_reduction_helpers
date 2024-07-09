@@ -42,221 +42,67 @@
    calibration data for each exposure, namely those for which the
    calibration data was taken closest in time to the actual object
    exposure.  This is especially of relevance for the illumination
-   correction frames.  The following python script
-   ~gen_sofs_for_scibasic.py~ below takes care of this.
-   
-   #+begin_src python :tangle ./gen_sofs_for_scibasic.py
-     #! /usr/bin/env python
+   correction frames.  The python script ~gen_sofs_for_scibasic.py~
+   below takes care of this.
 
-     # Run first, after downloading all the files from the ESO archive for one object.
-     # Download: raw data + processed calibrations !
-     # It is best to download the files into a folder that is named after the object,
-     # e.g. ./J0057-0941/
-     # Then run:
-     # `gen_sofs_for_scibasic.py ./J0057-0941/`
-     # replace ./J0057-0941/ with the object
-     # Next step: esorex_scibasic.sh
-
-     import sys,os
-     from glob import glob
-     from astropy.io import fits
-     from astropy.time import Time
-
-     # own function to generate the file lists based on the information
-     # provided in the fits header
-     from gen_file_list import gen_file_list
-
-     directory = sys.argv[1]
-     files = glob(directory + '*fits*')
-
-     # calibration frames
-     m_bias_list, m_bias_times = gen_file_list(files, 'HIERARCH ESO PRO CATG', 'MASTER_BIAS')
-     m_dark_list, m_dark_times = gen_file_list(files, 'HIERARCH ESO PRO CATG', 'MASTER_DARK')
-     m_flat_list, m_flat_times = gen_file_list(files, 'HIERARCH ESO PRO CATG', 'MASTER_FLAT')
-     tracet_list, tracet_times = gen_file_list(files, 'HIERARCH ESO PRO CATG', 'TRACE_TABLE')
-     wavect_list, wavect_times = gen_file_list(files, 'HIERARCH ESO PRO CATG', 'WAVECAL_TABLE')
-     geomet_list, geomet_times = gen_file_list(files, 'HIERARCH ESO PRO CATG', 'GEOMETRY_TABLE')
-     twilcb_list, twilcb_times = gen_file_list(files, 'HIERARCH ESO PRO CATG', 'TWILIGHT_CUBE')
-
-     # object frames & illum frames
-     object_list, object_times = gen_file_list(files, 'HIERARCH ESO DPR TYPE', 'OBJECT')
-     illumf_list, illumf_times = gen_file_list(files, 'HIERARCH ESO DPR TYPE', 'FLAT,LAMP,ILLUM')
-
-
-     for obj, obj_time in zip(object_list, object_times):
-
-	 obj_name = fits.getheader(obj)['OBJECT']
-    
-	 sof_name = directory + obj_name.replace(' ', '_') + '_basic_' + \
-	     os.path.basename(obj).removesuffix('fits.fz') + 'sof'
-	 sof_file = open(sof_name, 'w')
-
-	 sof_file.write(obj + '  OBJECT  \n')
-
-	 # find associated calibration which is closest in time and write to sof file
-	 illumf_min = (illumf_times - obj_time).argmin()
-	 m_bias_min = (m_bias_times - obj_time).argmin()
-	 m_dark_min = (m_dark_times - obj_time).argmin()
-	 m_flat_min = (m_flat_times - obj_time).argmin()
-	 tracet_min = (tracet_times - obj_time).argmin()
-	 wavect_min = (wavect_times - obj_time).argmin()
-	 geomet_min = (geomet_times - obj_time).argmin()
-	 twilcb_min = (twilcb_times - obj_time).argmin()
-
-	 sof_file.write(illumf_list[illumf_min] + '  ILLUM  \n')
-	 sof_file.write(m_bias_list[m_bias_min] + '  MASTER_BIAS  \n')
-	 sof_file.write(m_dark_list[m_dark_min] + '  MASTER_DARK \n')
-	 sof_file.write(m_flat_list[m_flat_min] + '  MASTER_FLAT \n')
-	 sof_file.write(tracet_list[tracet_min] + '  TRACE_TABLE \n')
-	 sof_file.write(wavect_list[wavect_min] + '  WAVECAL_TABLE \n')
-	 sof_file.write(geomet_list[geomet_min] + '  GEOMETRY_TABLE \n')
-	 sof_file.write(twilcb_list[twilcb_min] + '  TWILIGHT_CUBE \n')
-
-	 sof_file.close()
-	 print(sof_name + ' created...')
-
-	 #+end_src
+   Usage example:
+   #+begin_src sh
+     for dirname in ./J0519+0007/*_basic_*                          
+     do
+	 if [ -d ${dirname} ]; then
+	     echo $dirname    
+	     python ./gen_sofs_for_scipost.py ./J0519+0007/ $dirname/
+	 fi
+     done 
+   #+end_src
 
    The output of this script are sof-files for each science exposure
    in the object folder.
 
 ** Running muse_scibasic for all science exposures
 
-   The following script calls ~esorex~ with the ~muse_scibasic~ recipe
-   for each of the sof-files created in previous step.  For 8 object
-   exposures this takes about 30 minutes on my MUSE reduction machine.
-   We use the recipe parameters ~--nifu=-1~, which parallelises the
-   operation over all detectors, ~--merge=true~, which combines
-   individual files into single files (if possible), and
-   ~--resample=true~, which creates wavelength calibrated resampled
-   fits images for each detector to allow for a quick visual check of
-   the result.
+   The script ~esorex_scibasic.sh~ calls ~esorex~ with the
+   ~muse_scibasic~ recipe for each of the sof-files created in the
+   previous step.  For 8 object exposures this takes about 30 minutes
+   on my MUSE reduction machine.  We use the recipe parameters
+   ~--nifu=-1~, which parallelises the operation over all detectors,
+   ~--merge=true~, which combines individual files into single files
+   (where possible), and ~--resample=true~, which creates wavelength
+   calibrated resampled fits images for each detector to allow for a
+   quick visual check of the result. 
 
-   #+begin_src bash :tangle ./esorex_scibasic.sh
-     #! /usr/bin/env bash
-
-     # Run after all the sof files for muse_scibasic have been created with
-     # gen_sofs_for_scibasic.py
-     # Run: `esorex_scibasic.sh ./J0057-0941/` (replace J0057-0941 with the name of the object)
-
-     directory=$1
-     for soffile in ${directory}/*_basic_MUSE*sof
-     do
-	 soffile_base=`basename ${soffile}`
-	 outdir=${directory}/${soffile_base%.sof}
-	 if [ ! -d "${outdir}" ]; then
-	     mkdir ${outdir}
-	 fi
-
-	 esorex --no-datamd5 --no-checksum --log-file=${outdir}/${soffile_base%.sof}.log \
-		--output-dir=${outdir} \
-		muse_scibasic --nifu=-1 --merge=true --resample=true \
-		${soffile}
-     done
+   Example usage:
+   #+begin_src sh
+     esorex_scibasic.sh ./J0057-0941/ # (replace J0057-0941 with the name of the object)
    #+end_src
    
 * Post-processing with muse_scipost, muse_exp_align, and muse_exp_combine
 
   Equipped with the output from the basic reduction, we can now
   perform the post-processing that ultimately leads to science ready
-  data-cuboids (modulo sky-subtraction artefacts, TBD).  
+  data-cuboids (modulo sky-subtraction \& other possible artefacts, TBD).  
   
 ** Generation of sof-files for muse_scipost
 
-   The following bash script ~gen_sofs_for_scipost.sh~ collates the
-   output from ~muse_scibasic~ and associates the correct calibration
-   files for each exposure to create the sof-files for ~muse_scipost~.
-   The required calibration files, that were downloaded as processed
-   master-calibrations from the ESO archive, are the standard star
-   exposure, telluric star exposure, LSF profile determination, and
-   astrometric solution.
-   
-   #+begin_src bash :tangle ./gen_sofs_for_scipost.sh
-     #! /usr/bin/env bash
+   The bash script ~gen_sofs_for_scipost.sh~ collates the output from
+   ~muse_scibasic~ and associates the correct calibration files for
+   each exposure to create the sof-files for ~muse_scipost~.  The
+   required calibration files are the standard star exposure, telluric
+   star exposure, LSF profile determination, and astrometric solution.
+   We use the files downloaded as processed master-calibrations from
+   the ESO archive (use the calSelector service accordingly when
+   downloading MUSE raw-data from the ESO archive).
 
-     # run this after esorex_scibasic.sh has finished on an object
-     # > ./gen_sofs_for_scipost.sh ./obj_name/
-
-     object=$1
-
-     for dirname in ${object}/*basic*
-     do
-	 if [ -d ${dirname} ]; then
-	     echo $dirname
-	     python ./gen_sofs_for_scipost.py ${object} ${dirname}/
-	 fi
-     done
-   #+end_src
-
-   As with ~muse_scibasic~ we use the calibration data that is closest
-   in time to the actual science exposure.  These associations are
+   As with ~muse_scibasic~, we use calibration data that is closest in
+   time to the actual science exposure.  These associations are
    created by the python-script ~gen_sofs_for_scipost.py~ , which is
    called by ~gen_sofs_for_scipost.sh~.  Normally, no direct
    interaction by the user with ~gen_sofs_for_scipost.py~ is needed.
-   
-   #+begin_src python :tangle ./gen_sofs_for_scipost.py
-     #! /usr/bin/env python
-
-
-
-     #  for dirname in ./J0519+0007/*_basic_*
-     #   do
-     #    if [ -d ${dirname} ]; then
-     #     echo $dirname
-     #     python ./gen_sofs_for_scipost.py ./J0519+0007/ $dirname/
-     #    fi
-     #   done
-
-
-     import sys,os
-     from glob import glob
-     from astropy.io import fits
-     from astropy.time import Time
-
-     from gen_file_list import gen_file_list
-
-     download_directory = sys.argv[1]
-     scibasic_directory = sys.argv[2]
-
-     dldir_files = glob(download_directory + '*fits*')
-     pxtbl_files = sorted(glob(scibasic_directory + 'PIXTABLE*fits'))
-
-     obj_time = Time(fits.getheader(pxtbl_files[0], 0)['DATE-OBS'], format='fits')
-     obj_name = fits.getheader(pxtbl_files[0], 0)['OBJECT']
-
-     stdrsp_list, stdrsp_times = gen_file_list(dldir_files, 'HIERARCH ESO PRO CATG', 'STD_RESPONSE')
-     stdtlr_list, stdtlr_times = gen_file_list(dldir_files, 'HIERARCH ESO PRO CATG', 'STD_TELLURIC')
-     lsprof_list, lsprof_times = gen_file_list(dldir_files, 'HIERARCH ESO PRO CATG', 'LSF_PROFILE')
-     astrmt_list, astrmt_times = gen_file_list(dldir_files, 'HIERARCH ESO PRO CATG', 'ASTROMETRY_WCS')
-
-     # there should be only one
-     sky_line_file = gen_file_list(dldir_files, 'HIERARCH ESO PRO CATG', 'SKY_LINES', times=False)[0]
-     flt_list_file = gen_file_list(dldir_files, 'HIERARCH ESO PRO CATG', 'FILTER_LIST', times=False)[0]
-     ext_tabl_file = gen_file_list(dldir_files, 'HIERARCH ESO PRO CATG', 'EXTINCT_TABLE', times=False)[0]
-
-     # sof file out
-     timestamp = scibasic_directory[scibasic_directory.rfind('basic') + 6:-1]
-     sof_name = scibasic_directory + '/' + obj_name.replace(' ', '_') + '_' + \
-	 timestamp + '_scipost_1.sof'
-     sof_file = open(sof_name, 'w')
-
-     for filename in pxtbl_files:
-	 sof_file.write(filename + '  PIXTABLE_OBJECT \n')
-
-
-     sof_file.write(stdrsp_list[(stdrsp_times - obj_time).argmin()] + '  STD_RESPONSE \n')
-     sof_file.write(stdtlr_list[(stdtlr_times - obj_time).argmin()] + '  STD_TELLURIC \n')
-     sof_file.write(lsprof_list[(lsprof_times - obj_time).argmin()] + '  LSF_PROFILE \n')
-     sof_file.write(astrmt_list[(astrmt_times - obj_time).argmin()] + '  ASTROMETRY_WCS \n')
-
-     sof_file.write(sky_line_file + '  SKY_LINES \n')
-     sof_file.write(flt_list_file + '  FILTER_LIST \n')
-     sof_file.write(ext_tabl_file + '  EXTINCT_TABLE \n')
-     sof_file.close()
-
-     print(sof_name + ' created...')
-
-   #+end_src
+  
+   Usage example:
+    #+begin_src sh
+      ./gen_sofs_for_scipost.sh ./J0057-0941/
+    #+end_src
 
 ** Running muse_scipost
 
@@ -265,27 +111,11 @@
    This is done with the following script ~esorex_scipost.sh~.  We
    save the individual cubes and pixeltables for each object exposure,
    as well as the output from the sky subtraction routine (which we
-   want to modify below).  The running time for this script is around
-   60 minutes on my MUSE reduction machine.
+   want to modify below).  All this is done with the script ~esorex_scipost.sh~
 
-   #+begin_src bash :tangle ./esorex_scipost.sh
-     #! /usr/bin/env bash
-
-     directory=$1
-
-     for soffile in $directory/*_basic_*/*_scipost_1.sof
-     do
-	 outdir=${soffile%.sof}
-	 if [ ! -d "${outdir}" ]; then
-	     mkdir ${outdir}
-	 fi
-	 logname=`basename ${soffile}`
-    
-	 esorex --no-datamd5 --no-checksum --log-file=${outdir}/${logname%sof}log \
-		--output-dir=${outdir}/ \
-		muse_scipost --save=cube,individual,skymodel ${soffile}
-    
-     done
+   Usage example
+   #+begin_src bash
+     ./esorex_scipost.sh ./J0057-0941/
    #+end_src
 
 ** Exposure alignment with muse_exp_align
@@ -299,13 +129,13 @@
    combining them into a exposure stacked datacube.  This is achieved
    with the pipeline task ~muse_exp_align~.
 
-   The following script automates the process of finding all the
-   required input files for the sof-file and then running the task.
-   The list of files for the sof-file is displayed to the user prior
-   to the execution of the ~muse_exp_align~ recipe.
+   The script ~gen_sof_and_esorex_exp_align.sh~ automates the process
+   of finding all the required input files for the sof-file and then
+   running the task.  The list of files for the sof-file is displayed
+   to the user prior to the execution of the ~muse_exp_align~ recipe.
 
    Normally this script should be called via
-   ~./gen_sofs_for_scipost.sh ./obj_name/~, but sometimes the default
+   ~./gen_sof_and_esorex_exp_align.sh ./obj_name/~, but sometimes the default
    threshold for finding objects on which the alignment is
    triangulated needs to be adjusted to find more objects.  In this
    case pass the different threshold value as follows to the script:
@@ -317,46 +147,11 @@
    other is good (i.e. no mirror images of stars, no elongated stars,
    etc.).
 
-   #+begin_src bash :tangle ./gen_sof_and_esorex_exp_align.sh
-     #! /usr/bin/env bash
-
-     directory=$1
-     extrarg=$2
-     # to use --threshold=-1 
-
-     object=`basename ${directory}`
-     soffile=${object}_exp_align.sof
-
-     if [ -e "${soffile}" ];then
-	 rm ${soffile}
-     fi
-
-     for file in ${directory}/*basic*/*scipost_1/IMAGE_FOV_0001.fits
-     do
-	 echo ${file} IMAGE_FOV >> ${soffile}
-     done
-
-     echo ${soffile} created...
-     echo -------
-     cat ${soffile}
-
-     read -p "Proceed (y/n)? " answer
-     case ${answer:0:1} in
-	 y|Y )
-	     if [ ! -d "${object}_reduced" ]; then
-		 mkdir ${object}_reduced
-	     fi
-
-	     esorex --no-checksum --no-datamd5 \
-		    --log-file=${object}_exp_align.log \
-		    --output-dir=${object}_reduced \
-		    muse_exp_align ${extrarg} ${soffile} 
-	 ;;
-	 ,* )
-	     echo You entered ${answer}...
-	 ;;
-     esac
-   #+end_src
+   Usage example:
+#+begin_src sh
+  ./gen_sof_and_esorex_exp_align.sh ./obj_name/  # ... or
+  ./gen_sof_and_esorex_exp_align.sh ./obj_name/ --threshold=THRESH # to adjust exp_align threshold
+#+end_src
 
    The resulting output files from ~muse_exp_align~ can be found in
    the directory ~./obj_name_reduced/~.
@@ -366,77 +161,59 @@
    After all above steps have been completed, the final step is to
    resample all pixtables onto a common grid (aka "datacube").  This
    is achieved by the pipeline recipe ~muse_exp_combine~, and with the
-   following script we automate the creation of the sof-files and the
-   subsequent call of the ~muse_exp_combine~ recipe.  For an object
-   consisting of 8 science exposures this procedure takes about 90
-   minutes on my MUSE reduction machine.
+   script ~./gen_sof_and_esorex_exp_combine.sh~ we automate the
+   creation of the sof-files and the subsequent call of the
+   ~muse_exp_combine~ recipe.  For an object consisting of 8 science
+   exposures this procedure takes about 90 minutes on my MUSE
+   reduction machine.
 
-   #+begin_src bash :tangle ./gen_sof_and_esorex_exp_combine.sh
-     #! /usr/bin/env bash
-     # call: ./gen_sof_and_esorex_combine.sh ./obj_name/
-     # combined output then found in ./obj_name_reduced/
-
-     directory=$1
-
-     object=`basename ${directory}`
-     soffile=${object}_exp_combine.sof
-
-     if [ -e "${soffile}" ];then
-	 rm ${soffile}
-     fi
-
-     for file in ${directory}/*basic*/*scipost_1/PIXTABLE_REDUCED*
-     do
-	 echo ${file} PIXTABLE_REDUCED >> ${soffile}
-     done
-
-     echo ${object}_reduced/OFFSET_LIST.fits OFFSET_LIST >> ${soffile}
-
-     echo ${soffile} created...
-     echo -------
-     cat ${soffile}
-
-     read -p "Proceed (y/n)? " answer
-     case ${answer:0:1} in
-	 y|Y )
-
-	     esorex --no-checksum --no-datamd5 \
-		    --log-file=${object}_exp_combine.log \
-		    --output-dir=${object}_reduced \
-		    muse_exp_combine ${soffile}
-     esac
-
+   Usage example
+   #+begin_src bash
+     ./gen_sof_and_esorex_combine.sh ./obj_name/
    #+end_src
+
+   The combined output is than found in the folder ~./obj_name_reduced/~
 
 ** Summary
    
-   | Task               | Scripts                                            | Running Time (Object) |
-   |--------------------+----------------------------------------------------+-----------------------|
-   | ~muse_scibasic~    | ~./gen_sofs_for_scibasic.py ./obj_name/~           |                       |
-   |                    | ~./esorex_scibasic.sh ./obj_name/~                 | 30 min                |
-   | ~muse_scipost~     | ~./gen_sofs_for_scipost.sh ./obj_name/~            |                       |
-   |                    | ~./esorex_scipost.sh ./obj_name/~                  | 60 min                |
-   | ~muse_exp_align~   | ~./gen_sof_and_esorex_exp_align.sh ./obj_name/~    | 5 min                 |
-   |                    | note: one can adjust the threshold (see above)     |                       |
-   | ~muse_exp_combine~ | ~./gen_sof_and_esorex_exp_combine.sh ./obj_name/~  | 90 min                |
+   | Task               | Scripts                                           | Wall Time |
+   |--------------------+---------------------------------------------------+-----------|
+   | ~muse_scibasic~    | ~./gen_sofs_for_scibasic.py ./obj_name/~          |           |
+   |                    | ~./esorex_scibasic.sh ./obj_name/~                | 30 min    |
+   | ~muse_scipost~     | ~./gen_sofs_for_scipost.sh ./obj_name/~           |           |
+   |                    | ~./esorex_scipost.sh ./obj_name/~                 | 60 min    |
+   | ~muse_exp_align~   | ~./gen_sof_and_esorex_exp_align.sh ./obj_name/~   | 5 min     |
+   |                    | note: one can adjust the threshold (see above)    |           |
+   | ~muse_exp_combine~ | ~./gen_sof_and_esorex_exp_combine.sh ./obj_name/~ | 90 min    |
 
-   Running times are what I get typically for the MUSE reduction
-   server at Leiden Observatory.
+   Running times are what typically got for the MUSE reduction server
+   at Leiden Observatory for objects with 8 exposures.
+
+
+* Second pass of muse_scipost (resampling to output grid, use --autocalib=deepfield)
+
+** Generate .sof files for second run
+
+- append ~OFFSET_LIST~ and ~OUTPUT_WCS~ from first run to scipost sof files
+- store these in ~ $directory/*_basic_*/*_scipost_2.sof~
+
+  
+** Run scipost again with those sof files
    
-* ☛ TODO Second pass of muse_scipost with modified sky continuum
+# * ☛ TODO Second pass of muse_scipost with modified sky continuum
 
-  See Sect. 2.1 in Herenz et al. (2023, A&A 670, A121).
+#   See Sect. 2.1 in Herenz et al. (2023, A&A 670, A121).
 
   
 * License
 
 #+begin_quote
 /*
- * ----------------------------------------------------------------------------
+ * ---------------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE":
- * <eherenz@eso.org> wrote this file.  As long as you retain this notice you
+ * <edmund.herenz@iucaa.in> wrote this file.  As long as you retain this notice you
  * can do whatever you want with this stuff. If we meet some day, and you think
- * this stuff is worth it, you can buy me a beer in return.   E.C. Herenz (2023)
- * ----------------------------------------------------------------------------
+ * this stuff is worth it, you can buy me a beer in return.   E.C. Herenz (2023,2024)
+ * ----------------------------------------------------------------------------------
  */
 #+end_quote
