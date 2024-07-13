@@ -208,6 +208,8 @@
 
 ** Combine cubes with mpdaf
 
+- python script ~mpdaf_scipost2_combine.py~, usage ~mpdaf_scipost2_combine.py -d J1044+0353_reduced~
+
 
   
 # * ☛ TODO Second pass of muse_scipost with modified sky continuum
