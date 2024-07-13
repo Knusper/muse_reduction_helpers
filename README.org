@@ -194,12 +194,22 @@
 
 ** Generate .sof files for second run
 
-- append ~OFFSET_LIST~ and ~OUTPUT_WCS~ from first run to scipost sof files
-- store these in ~ $directory/*_basic_*/*_scipost_2.sof~
-
+- script: ~gen_sofs_for_scipost2.sh~, usage ~gen_sofs_for_scipost2.sh ./object_dir/~
+  - append ~OFFSET_LIST~ and ~OUTPUT_WCS~ from first run to scipost sof files
+  - notes
+    - this requires that the initial reduction has been inspected
+      visually to ensure that the offsets determined by ~muse_exp_align~ are reasonable
+  - store these in ~ $directory/*_basic_*/*_scipost_2.sof~
   
 ** Run scipost again with those sof files
-   
+
+- script ~esorex_scipost2.sh~
+  - uses `--autcalib=deepfield` as default
+
+** Combine cubes with mpdaf
+
+
+  
 # * ☛ TODO Second pass of muse_scipost with modified sky continuum
 
 #   See Sect. 2.1 in Herenz et al. (2023, A&A 670, A121).
