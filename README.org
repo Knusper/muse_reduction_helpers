@@ -216,6 +216,7 @@
 
 - python script ~gen_cont_image.py~ → creates continuum image; usage information ~gen_cont_image.py -h~.
 - example usage: ~gen_cont_image.py -i ./DATACUBE_scipost_2_mpdaf_cmbd.fits -l 1150 1400 1830 1990~
+- note: requires working LSDCat installation 
 
   
 # * ☛ TODO Second pass of muse_scipost with modified sky continuum

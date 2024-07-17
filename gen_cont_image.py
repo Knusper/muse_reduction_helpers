@@ -46,7 +46,6 @@ cont_regs = [(int(layers[i]), int(layers[i + 1])) for i in range(0, len(layers),
 
 cube_basename = basename(cube_filename)
 cube_pathname = dirname(cube_filename)
-out_name_base = cube_pathname + cube_basename.split(".")[:-1][0]
 
 ############
 
