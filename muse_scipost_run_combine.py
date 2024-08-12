@@ -5,7 +5,7 @@ from glob import glob
 from mpdaf.obj import CubeList
 
 parser = argparse.ArgumentParser(
-    description="""Takes *scipost_2_DATACUBE_FINAL.fits files and passes them through
+    description="""Takes *scipost_<run?_DATACUBE_FINAL.fits files and passes them through
 mpdaf's CubeList.combine for cube combination with sigma-clipping."""
 )
 parser.add_argument(
@@ -13,7 +13,16 @@ parser.add_argument(
     "--directory",
     required=True,
     type=str,
-    help="Directory where *scipost_2_DATACUBE_FINAL.fits files are stored.",
+    help="""Directory where *scipost_<run>_DATACUBE_FINAL.fits files are stored;
+    <run> indicates the number of the iteration (default: 2).
+""",
+)
+parser.add_argument(
+    "--run",
+    required=False,
+    type=str,
+    default="2",
+    help="Scipost run to combine (default: 2).",
 )
 parser.add_argument(
     "--nmax",
@@ -36,14 +45,14 @@ parser.add_argument(
     help="Use MAD statistics for sigma-clipping.",
 )
 
+
 args = parser.parse_args()
 
-outfile = args.directory + "/DATACUBE_scipost_2_mpdaf_cmbd.fits"
-expmapfile = args.directory + "/EXPMAP_scipost_2_mpdaf_cmbd.fits"
-statpixfile = args.directory + "/STATPIX_scipost_2_mpdaf_cmbd.fits"
+outfile = args.directory + "/DATACUBE_scipost_" + args.run + "_mpdaf_cmbd.fits"
+expmapfile = args.directory + "/EXPMAP_scipost_" + args.run + "_mpdaf_cmbd.fits"
+statpixfile = args.directory + "/STATPIX_scipost_" + args.run + "_mpdaf_cmbd.fits"
 
-
-filelist = glob(args.directory + "/*scipost_2_DATACUBE_FINAL.fits")
+filelist = glob(args.directory + "/*scipost_" + args.run + "_DATACUBE_FINAL.fits")
 cubelist = CubeList(filelist)
 
 combined_cube, expmap, statpix = cubelist.combine(
@@ -54,5 +63,5 @@ combined_cube.write(outfile)
 print("MPDAF combined cube written to: " + outfile)
 expmap.write(expmapfile)
 print("Exposure map written to: " + expmapfile)
-statpix.write(statpixfile)
+statpix.write(statpixfile, overwrite=True)
 print("Statpix table written to: " + statpixfile)

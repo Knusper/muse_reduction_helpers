@@ -60,6 +60,9 @@ args = parser.parse_args()
 
 im, head = fits.getdata(args.input, header=True)
 head.remove('BUNIT')
+head["HISTORY"] = "--- start of gen_sky_mask.py command ---" 
+head["HISTORY"] = command                                      
+head["HISTORY"] = "--- end of gen_sky_mask.py command ---"   
 
 # sigma clipping & conversion to float
 sc_im = sigma_clip(im, sigma=args.sigma)

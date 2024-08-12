@@ -6,7 +6,7 @@ directory=$1
 extrarg=$2
 
 # run esorex
-for soffile in $directory/*_basic_*/*_scipost_2.sof
+for soffile in $directory/*_basic_*/*_scipost_3.sof
 do
     outdir=${soffile%.sof}
     if [ ! -d "${outdir}" ]; then
@@ -20,10 +20,10 @@ do
 done
 
 echo "linking output files"
-for cubefile in ${directory}/*basic*/*scipost_2/DATACUBE_FINAL.fits
+for cubefile in ${directory}/*basic*/*scipost_3/DATACUBE_FINAL.fits
 do
     outfile=`echo $cubefile | rev | sed 's\/\_\' | rev`
     outfile=`basename $outfile`
-    ln -vf ${cubefile}  $(basename $directory)_reduced/${outfile}
+    ln -v ${cubefile}  $(basename $directory)_reduced/${outfile}
 done
 

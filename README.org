@@ -192,38 +192,69 @@
 
 * Second pass of muse_scipost (resampling to output grid, use --autocalib=deepfield)
 
-** Generate .sof files for second run
+** Generate .sof files for 2nd run
 
-- script: ~gen_sofs_for_scipost2.sh~, usage ~gen_sofs_for_scipost2.sh ./object_dir/~
+- bash script: ~gen_sofs_for_scipost2.sh~, usage ~gen_sofs_for_scipost2.sh ./object_dir/~
   - append ~OFFSET_LIST~ and ~OUTPUT_WCS~ from first run to scipost sof files
   - notes
     - this requires that the initial reduction has been inspected
       visually to ensure that the offsets determined by ~muse_exp_align~ are reasonable
-  - store these in ~ $directory/*_basic_*/*_scipost_2.sof~
+  - store these in ~${object_dir}/*_basic_*/*_scipost_2.sof~
   
-** Run scipost again with those sof files
+** Run scipost with .sof files for 2nd run
 
-- script ~esorex_scipost2.sh~
-  - uses `--autcalib=deepfield` as default
-
+- bash script ~esorex_scipost2.sh~
+  - usage: ~esorex_scipost2.sh $directory~
+  - usage example: ~esorex_scipost2.sh ./J1044+0353/~
+  - uses ~--autcalib=deepfield~ as default
+  - out files: ~${directory}/*basic*/*scipost_2/DATACUBE_FINAL.fits~
+  - links files of individual cubes to ~${object_dir}_reduced~ directory
+    (filename glob-pattern ~*_scipost_2_*~)
+    
 ** Combine cubes with mpdaf
 
-- python script ~mpdaf_scipost2_combine.py~, usage ~mpdaf_scipost2_combine.py -d J1044+0353_reduced~
+- python script ~mpdaf_scipost_run_combine.py~
+  - usage ~mpdaf_scipost_run_combine.py ${object_dir}_reduced~
+  - usage example ~mpdaf_scipost_run_combine.py -d J1044+0353_reduced~
+  - out files: ~${object_dir}_reduced/{DATACUBE,EXPMAP,STATPIX}_2_mpaf_cmbd.fits~
+  - for cubes with few exposures, better to use MAD statistics, i.e. use the script with
+    option ~--mad~
+    
+** Generate band images and append to combined cube
 
-* Third pass - update the sky mask
+- python script ~gen_band_images.py~
+  - usage: ~gen_band_images.py ${cube_file}~
+  - example usage: ~gen_band_images.py ./J1044+0353_reduced/DATACUBE_scipost_2_mpdaf_cmbd.fits~
+  - creates the following bands: "Johnson_V", "Cousins_R", "Cousins_I", "SDSS_g",
+    "SDSS_r", "SDSS_i", "SDSS_z", "PS1_g", "PS1_r", "PS1_i", "PS1_z"
+  - band images are appended to HDUList of input FITS file
 
 ** Generate continuum image & sky-mask
 
 - python script ~gen_cont_image.py~ → creates continuum image; usage information ~gen_cont_image.py -h~.
-- example usage: ~gen_cont_image.py -i ./DATACUBE_scipost_2_mpdaf_cmbd.fits -l 1150 1400 1830 1990~
+  - example usage: ~gen_cont_image.py -i ./J1044+0353_reduced/DATACUBE_scipost_2_mpdaf_cmbd.fits -l 1150 1400 1830 1990~
 - note: requires working LSDCat installation 
+- python script ~gen_sky_mask.py~ → creates sky mask from continuum image; usage information ~gen_sky_mask.py -h~
+  - example usage: ~gen_sky_mask.py -i cont_im_DATACUBE_scipost_2_mpdaf_cmbd.fits~
+    (default parameter should be fine in most cases)
 
-  
-# * ☛ TODO Second pass of muse_scipost with modified sky continuum
+** Generate sof-files for 3rd scipost run
 
-#   See Sect. 2.1 in Herenz et al. (2023, A&A 670, A121).
+- script: ~gen_sofs_for_scipost3.sh~, usage ~gen_sofs_for_scipost3.sh ./object_dir/~
+  - appends ~SKY_MASK~ from ~gen_cont_image.py~ & ~gen_sky_mask.py~ to second run scipost sof files
+  - stores these in ~${object_dir}/*_basic_*/*_scipost_3.sof~
+- example usage: ~gen_sofs_for_scipost3.sh ./J1044+0353/~
 
-  
+** Run scipost with .sof files for 3rd run    
+
+- script ~esorex_scipost3.sh~
+  - uses ~--autcalib=deepfield~ as default, and ~--save=cube,individual,skymodel~
+  - links files of individual cubes to ~${object_dir}_reduced~ directory
+    (filename glob-pattern ~*_scipost_3_*~)
+
+** Combine cubes with mpdaf    
+
+
 * License
 
 #+begin_quote
