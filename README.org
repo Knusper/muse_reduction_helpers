@@ -260,7 +260,22 @@
 
 *** Combine cubes with mpdaf    
 
+** Modify SKY_CONTINUUM output to improve oversubtraction at Hα & [OIII]
 
+- effect especially visible in J1044 (large negative troughs become visible in
+  spectra extracted with large apertures in the outskirts of the FoV)
+
+script: ~sky_continuum_modify.py~
+
+example usage:
+
+#+begin_src sh
+  for file in J104457_MUSE.2019-12-*
+  do
+  ./sky_continuum_modify.py -i $file -o Ha_mod_$file --lambda1=6643.5 --lambda2=6650.9 --target 6647.28
+  done
+
+#+end_src
 
 * License
 
