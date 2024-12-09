@@ -81,8 +81,10 @@
   Equipped with the output from the basic reduction, we can now
   perform the post-processing that ultimately leads to science ready
   data-cuboids (modulo sky-subtraction \& other possible artefacts, TBD).  
-  
-** Generation of sof-files for muse_scipost
+
+** First pass of muse_scipost (standard reduction, finishing with muse_exp_align & muse_exp_combine)
+
+*** Generation of sof-files for muse_scipost
 
    The bash script ~gen_sofs_for_scipost.sh~ collates the output from
    ~muse_scibasic~ and associates the correct calibration files for
@@ -104,7 +106,7 @@
       ./gen_sofs_for_scipost.sh ./J0057-0941/
     #+end_src
 
-** Running muse_scipost
+*** Running muse_scipost
 
    With the sof-files from the previous step we can now run
    ~muse_scipost~ on the output of ~muse_scibasic~ for each object.
@@ -118,7 +120,7 @@
      ./esorex_scipost.sh ./J0057-0941/
    #+end_src
 
-** Exposure alignment with muse_exp_align
+*** Exposure alignment with muse_exp_align
 
    The initial solution of the astrometry that is applied to each
    individual exposure is anchored on the catalogued position of the
@@ -156,7 +158,7 @@
    The resulting output files from ~muse_exp_align~ can be found in
    the directory ~./obj_name_reduced/~.
    
-** Exposure combination with muse_exp_combine
+*** Exposure combination with muse_exp_combine
 
    After all above steps have been completed, the final step is to
    resample all pixtables onto a common grid (aka "datacube").  This
@@ -174,7 +176,7 @@
 
    The combined output is than found in the folder ~./obj_name_reduced/~
 
-** Summary
+*** Summary
    
    | Task               | Scripts                                           | Wall Time |
    |--------------------+---------------------------------------------------+-----------|
@@ -190,18 +192,17 @@
    at Leiden Observatory for objects with 8 exposures.
 
 
-* Second pass of muse_scipost (resampling to output grid, use --autocalib=deepfield)
+** Second pass of muse_scipost (resampling to output grid & use --autocalib=deepfield)
 
-** Generate .sof files for 2nd run
+*** Generate .sof files for 2nd run
 
 - bash script: ~gen_sofs_for_scipost2.sh~, usage ~gen_sofs_for_scipost2.sh ./object_dir/~
   - append ~OFFSET_LIST~ and ~OUTPUT_WCS~ from first run to scipost sof files
-  - notes
-    - this requires that the initial reduction has been inspected
-      visually to ensure that the offsets determined by ~muse_exp_align~ are reasonable
+  - note: this requires that the initial reduction has been inspected visually to ensure
+    that the offsets determined by ~muse_exp_align~ are reasonable
   - store these in ~${object_dir}/*_basic_*/*_scipost_2.sof~
   
-** Run scipost with .sof files for 2nd run
+*** Run scipost with .sof files for 2nd run
 
 - bash script ~esorex_scipost2.sh~
   - usage: ~esorex_scipost2.sh $directory~
@@ -211,7 +212,7 @@
   - links files of individual cubes to ~${object_dir}_reduced~ directory
     (filename glob-pattern ~*_scipost_2_*~)
     
-** Combine cubes with mpdaf
+*** Combine cubes with mpdaf
 
 - python script ~mpdaf_scipost_run_combine.py~
   - usage ~mpdaf_scipost_run_combine.py ${object_dir}_reduced~
@@ -220,7 +221,7 @@
   - for cubes with few exposures, better to use MAD statistics, i.e. use the script with
     option ~--mad~
     
-** Generate band images and append to combined cube
+*** Generate band images and append to combined cube
 
 - python script ~gen_band_images.py~
   - usage: ~gen_band_images.py ${cube_file}~
@@ -229,7 +230,12 @@
     "SDSS_r", "SDSS_i", "SDSS_z", "PS1_g", "PS1_r", "PS1_i", "PS1_z"
   - band images are appended to HDUList of input FITS file
 
-** Generate continuum image & sky-mask
+
+** Third pass of reduction (did not provide much improvement)
+
+- trying a modified sky mask to optimise the flat fielding obtained by the auto calibration
+
+*** Generate continuum image & sky-mask
 
 - python script ~gen_cont_image.py~ → creates continuum image; usage information ~gen_cont_image.py -h~.
   - example usage: ~gen_cont_image.py -i ./J1044+0353_reduced/DATACUBE_scipost_2_mpdaf_cmbd.fits -l 1150 1400 1830 1990~
@@ -238,21 +244,22 @@
   - example usage: ~gen_sky_mask.py -i cont_im_DATACUBE_scipost_2_mpdaf_cmbd.fits~
     (default parameter should be fine in most cases)
 
-** Generate sof-files for 3rd scipost run
+*** Generate sof-files for 3rd scipost run
 
 - script: ~gen_sofs_for_scipost3.sh~, usage ~gen_sofs_for_scipost3.sh ./object_dir/~
   - appends ~SKY_MASK~ from ~gen_cont_image.py~ & ~gen_sky_mask.py~ to second run scipost sof files
   - stores these in ~${object_dir}/*_basic_*/*_scipost_3.sof~
 - example usage: ~gen_sofs_for_scipost3.sh ./J1044+0353/~
 
-** Run scipost with .sof files for 3rd run    
+*** Run scipost with .sof files for 3rd run    
 
 - script ~esorex_scipost3.sh~
   - uses ~--autcalib=deepfield~ as default, and ~--save=cube,individual,skymodel~
   - links files of individual cubes to ~${object_dir}_reduced~ directory
     (filename glob-pattern ~*_scipost_3_*~)
 
-** Combine cubes with mpdaf    
+*** Combine cubes with mpdaf    
+
 
 
 * License
