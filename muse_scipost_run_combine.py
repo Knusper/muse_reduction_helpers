@@ -53,6 +53,7 @@ expmapfile = args.directory + "/EXPMAP_scipost_" + args.run + "_mpdaf_cmbd.fits"
 statpixfile = args.directory + "/STATPIX_scipost_" + args.run + "_mpdaf_cmbd.fits"
 
 filelist = glob(args.directory + "/*scipost_" + args.run + "_DATACUBE_FINAL.fits")
+print(filelist)
 cubelist = CubeList(filelist)
 
 combined_cube, expmap, statpix = cubelist.combine(

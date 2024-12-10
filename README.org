@@ -277,6 +277,10 @@ example usage:
 
 #+end_src
 
+** Generate .sof files with modified sky continuum
+
+script: ~gen_sofs_for_scipost2_sycntmod.sh~
+
 * License
 
 #+begin_quote

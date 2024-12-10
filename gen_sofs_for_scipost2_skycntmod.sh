@@ -10,7 +10,7 @@ skycnt_prefix=$2
 for soffile in $directory/*_basic_*/*_scipost_2.sof
 do
     newsoffile=${soffile:0:-5}2_skycntmod.sof
-    soffile_dir=`dirname ${soffile}`
+    soffile_dir=${soffile:0:-4}
     cat $soffile > $newsoffile
     # remove original SKY_LINES entry from new .sof file
     sed -i '/SKY_LINES/d' $newsoffile
