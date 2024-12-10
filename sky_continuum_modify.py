@@ -68,7 +68,7 @@ def lin_interp_spec(spec, xax, lambda_1, lambda_2, return_idx=True):
     else:
         return interp_spec
 
-
+  
 t = Table.read(args.input)
 interp_spec, i1, i2 = lin_interp_spec(
     t["flux"], t["lambda"], args.lambda1, args.lambda2
